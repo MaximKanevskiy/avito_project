@@ -6,26 +6,26 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </head>
 <body>
-    <ul id="categoryList">
-        {% for category in categories %}
-            <li>
-                <button class="categoryButton" data-id="{{ forloop.counter }}">{{ category }}</button>
-            </li>
-        {% endfor %}
-    </ul>
-    <ul id="childrenList"></ul>
+    <div id="categories"></div>
 
     <script>
-        $(document).ready(function(){
-            $(".categoryButton").click(function(){
-                var categoryId = $(this).data("id");
-                $.post("/get_children_nodes", { microcategory_id: categoryId }, function(data){
-                    $("#childrenList").empty();
-                    data.children.forEach(function(child){
-                        $("#childrenList").append("<li>" + child + "</li>");
+        function getCategoriesChildren(id) {
+            $.get('/get-categories-children', { id: id }, function(data) {
+                var list = $('<ul>');
+                data.forEach(function(item) {
+                    var listItem = $('<li>');
+                    listItem.text(item.name);
+                    listItem.click(function() {
+                        getCategoriesChildren(item.id);
                     });
+                    list.append(listItem);
                 });
+                $('#categories').html(list);
             });
+        }
+
+        $(document).ready(function() {
+            getCategoriesChildren(1);
         });
     </script>
 </body>

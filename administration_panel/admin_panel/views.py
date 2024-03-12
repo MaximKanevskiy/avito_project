@@ -1,5 +1,5 @@
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
+from django.views import View
 
 raw_categories = {
     "Бытовая электроника": ["Товары для компьютера", "Фототехника", "Телефоны", "Планшеты и электронные книги",
@@ -32,10 +32,20 @@ class CategoryNode:
         self.children = []
 
     def add_child(self, child):
+        """Добавляет дочерний узел в список детей текущего узла"""
         self.children.append(child)
 
+    def to_dict(self):
+        """Возвращает словарь, представляющий узел и его детей"""
+        return {
+            'id': self.id,
+            'name': self.name,
+            'children': [child.to_dict() for child in self.children]
+        }
 
-def get_all_categories_tree():
+
+def get_all_categories_tree() -> CategoryNode:
+    """Возвращает корневой узел древа категорий"""
     root_node = CategoryNode("ROOT")
     for category, sub_categories in raw_categories.items():
         category_node = CategoryNode(category)
@@ -46,31 +56,21 @@ def get_all_categories_tree():
     return root_node
 
 
-def find_node(node, identifier):
-    if node.id == identifier:
-        return node
-    for child in node.children:
-        found_node = find_node(child, identifier)
-        if found_node is not None:
-            return found_node
-    return None
+def get_node_children(identifier: int) -> list:
+    """Ищет дочерние узлы выбранного родительского узла"""
+    full_catalogue = get_all_categories_tree()
+    for node in full_catalogue.children:
+        if node.id == identifier:
+            return [child.to_dict() for child in node.children]
 
 
-def recursive_tree(full_tree, head_node_id):
-    head_node = find_node(full_tree, head_node_id)
-    if head_node is not None:
-        return head_node.children
-    return []
-
-
-@csrf_exempt
-def get_categories_children(request):
-    if request.method == 'POST':
-        full_tree = get_all_categories_tree()
-        children_node_id = request.POST.get('microcategory_id')
-
-        new_head = recursive_tree(full_tree, int(children_node_id) if children_node_id else 0)
-        children = [child.name for child in new_head]
-        return JsonResponse({'children': children})
-    else:
-        return JsonResponse({'error': 'Invalid request method'}, status=400)
+class GetCategoriesChildrenView(View):
+    def get(self, request, *args, **kwargs) -> JsonResponse:
+        """Возвращает JsonResponse с именами детей узла, идентификатор которого передан в запросе"""
+        identifier = request.GET.get('id', None)
+        if identifier is not None:
+            identifier = int(identifier)
+            children = get_node_children(identifier)
+            if children:
+                return JsonResponse([child.name for child in children], safe=False)
+        return JsonResponse([])
