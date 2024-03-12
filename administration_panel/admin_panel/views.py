@@ -1,4 +1,5 @@
-from django.shortcuts import render
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 
 raw_categories = {
     "Бытовая электроника": ["Товары для компьютера", "Фототехника", "Телефоны", "Планшеты и электронные книги",
@@ -62,9 +63,14 @@ def recursive_tree(full_tree, head_node_id):
     return []
 
 
+@csrf_exempt
 def get_categories_children(request):
-    full_tree = get_all_categories_tree()
-    children_node_id = request.GET.get('microcategory_id')
+    if request.method == 'POST':
+        full_tree = get_all_categories_tree()
+        children_node_id = request.POST.get('microcategory_id')
 
-    new_head = recursive_tree(full_tree, int(children_node_id) if children_node_id else 0)
-    return render(request, 'admin_panel/child_nodes.html', {'head': new_head})
+        new_head = recursive_tree(full_tree, int(children_node_id) if children_node_id else 0)
+        children = [child.name for child in new_head]
+        return JsonResponse({'children': children})
+    else:
+        return JsonResponse({'error': 'Invalid request method'}, status=400)

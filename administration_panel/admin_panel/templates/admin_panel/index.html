@@ -3,38 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <title>Admin Panel</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </head>
 <body>
-    <form id="category_form">
-        <label for="current_node">Текущий узел:</label>
-        <input type="text" id="current_node" name="current_node">
-        <select id="children_select">
-            {% for child in head %}
-                <option value="{{ child.id }}">{{ child.name }}</option>
-            {% endfor %}
-        </select>
-        <button type="button" onclick="updateCurrentNode()">Выбрать дочерний узел</button>
-    </form>
+    <ul id="categoryList">
+        {% for category in categories %}
+            <li>
+                <button class="categoryButton" data-id="{{ forloop.counter }}">{{ category }}</button>
+            </li>
+        {% endfor %}
+    </ul>
+    <ul id="childrenList"></ul>
+
     <script>
-        function updateCurrentNode() {
-          var current_node_input = document.getElementById('current_node');
-          var selected_option = document.getElementById('children_select').value;
-          current_node_input.value = selected_option;
-
-          var form = document.getElementById('category_form');
-          var formData = new FormData(form);
-
-          fetch('/get_categories_children/?microcategory_id=' + selected_option, {
-            method: 'GET',
-            body: formData
-          }).then(response => {
-            return response.text();
-          }).then(data => {
-            document.getElementById('category_content').innerHTML = data;
-          }).catch(error => {
-            console.error('Error:', error);
-          });
-        }
+        $(document).ready(function(){
+            $(".categoryButton").click(function(){
+                var categoryId = $(this).data("id");
+                $.post("/get_children_nodes", { microcategory_id: categoryId }, function(data){
+                    $("#childrenList").empty();
+                    data.children.forEach(function(child){
+                        $("#childrenList").append("<li>" + child + "</li>");
+                    });
+                });
+            });
+        });
     </script>
 </body>
 </html>
