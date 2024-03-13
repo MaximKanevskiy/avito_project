@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <title>Admin Panel</title>
@@ -7,6 +7,8 @@
 </head>
 <body>
     <div id="categories"></div>
+    <input type="text" id="search" placeholder="Поиск локаций...">
+    <div id="hints"></div>
 
     <script>
         function displayCategories(data, element) {
@@ -22,14 +24,38 @@
             element.append(list);
         }
 
+        function updateHints(hints) {
+            var hintsDiv = $('#hints');
+            hintsDiv.empty();
+            hints.forEach(function(hint) {
+                var hintDiv = $('<div>');
+                hintDiv.text(hint);
+                hintsDiv.append(hintDiv);
+            });
+        }
+
         $(document).ready(function() {
             $.ajax({
                 url: '/',
                 dataType: 'json',
                 success: function(data) {
+                    console.log(data);
                     var parsedData = JSON.parse(JSON.stringify(data));
                     displayCategories([parsedData], $('#categories'));
                 }
+            });
+
+            $('#search').on('input', function() {
+                $.ajax({
+                    url: '/search/',
+                    data: {
+                      'query': $('#search').val()
+                    },
+                    dataType: 'json',
+                    success: function (data) {
+                      updateHints(data.result);
+                    }
+                });
             });
         });
     </script>
