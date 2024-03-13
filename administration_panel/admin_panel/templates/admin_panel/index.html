@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
     <title>Admin Panel</title>
@@ -9,23 +9,28 @@
     <div id="categories"></div>
 
     <script>
-        function getCategoriesChildren(id) {
-            $.get('/get-categories-children', { id: id }, function(data) {
-                var list = $('<ul>');
-                data.forEach(function(item) {
-                    var listItem = $('<li>');
-                    listItem.text(item.name);
-                    listItem.click(function() {
-                        getCategoriesChildren(item.id);
-                    });
-                    list.append(listItem);
-                });
-                $('#categories').html(list);
+        function displayCategories(data, element) {
+            var list = $('<ul>');
+            data.forEach(function(item) {
+                var listItem = $('<li>');
+                listItem.text(item.name);
+                if (item.children.length > 0) {
+                    displayCategories(item.children, listItem);
+                }
+                list.append(listItem);
             });
+            element.append(list);
         }
 
         $(document).ready(function() {
-            getCategoriesChildren(1);
+            $.ajax({
+                url: '/',
+                dataType: 'json',
+                success: function(data) {
+                    var parsedData = JSON.parse(JSON.stringify(data));
+                    displayCategories([parsedData], $('#categories'));
+                }
+            });
         });
     </script>
 </body>

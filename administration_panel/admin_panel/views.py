@@ -44,8 +44,8 @@ class CategoryNode:
         }
 
 
-def get_all_categories_tree() -> CategoryNode:
-    """Возвращает корневой узел древа категорий"""
+def get_all_categories_tree() -> dict:
+    """Возвращает данные всего дерева категорий"""
     root_node = CategoryNode("ROOT")
     for category, sub_categories in raw_categories.items():
         category_node = CategoryNode(category)
@@ -53,24 +53,17 @@ def get_all_categories_tree() -> CategoryNode:
             sub_category_node = CategoryNode(sub_category)
             category_node.add_child(sub_category_node)
         root_node.add_child(category_node)
-    return root_node
+    return root_node.to_dict()
 
 
-def get_node_children(identifier: int) -> list:
-    """Ищет дочерние узлы выбранного родительского узла"""
-    full_catalogue = get_all_categories_tree()
-    for node in full_catalogue.children:
-        if node.id == identifier:
-            return [child.to_dict() for child in node.children]
+full_tree = get_all_categories_tree()
 
 
-class GetCategoriesChildrenView(View):
-    def get(self, request, *args, **kwargs) -> JsonResponse:
-        """Возвращает JsonResponse с именами детей узла, идентификатор которого передан в запросе"""
-        identifier = request.GET.get('id', None)
-        if identifier is not None:
-            identifier = int(identifier)
-            children = get_node_children(identifier)
-            if children:
-                return JsonResponse([child.name for child in children], safe=False)
-        return JsonResponse([])
+class GetAllCategoriesView(View):
+    def get(self, request, *args, **kwargs):
+        """Возвращает JsonResponse с данными всего дерева категорий при загрузке страницы"""
+        response = JsonResponse(full_tree, safe=False)
+        response['Content-Type'] = 'application/json; charset=utf-8'
+        return response
+
+# МЕНЯТЬ БАЗУ ДАННЫХ И СОХРАНЯТЬ СТАРУЮ БД

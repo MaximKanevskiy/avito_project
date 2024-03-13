@@ -1,8 +1,6 @@
 from django.urls import path
-from django.views.generic import TemplateView
-from .views import GetCategoriesChildrenView
+from .views import GetAllCategoriesView
 
 urlpatterns = [
-    path('get-categories-children', GetCategoriesChildrenView.as_view()),
-    path('', TemplateView.as_view(template_name="admin_panel/index.html")),
+    path('', GetAllCategoriesView.as_view(), name='get_all'),
 ]
