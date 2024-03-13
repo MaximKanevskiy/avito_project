@@ -21,104 +21,70 @@ def main(request):
     return JsonResponse({'error': 'Only POST requests are allowed'}, status=405)
 
 
-def logic_main(microcategory_id, location_id, user_id):  # доделать построение и ретюрн json с нужными данными
-    # (смотреть в методичке) + функцию выявления скидки
+def logic_main(microcategory_id, location_id,
+               user_id):  # доделать построение и ретюрн json с нужными данными (смотреть в методичке) + функцию выявления скидки
     global user_skid
+
+    with open('путь к файлу', 'r') as file:
+        id_mat_base = file.readline().strip()
+        id_mat_dis = file.readline()[1].split()[0]
+
     if user_id not in user_skid:
-        return logic_base(microcategory_id, location_id, user_id)
+        return logic_base(microcategory_id, location_id, user_id, id_mat_base)
     else:
-        return logic_skid(microcategory_id, location_id, user_id)
+        return logic_skid(microcategory_id, location_id, user_id, id_mat_dis)
 
 
-def logic_base(microcategory_id, location_id, user_id):
+def logic_base(microcategory_id, location_id, user_id, id_mat_base):
     pri = ''
     conn = sqlite3.connect(':memory:')
     c = conn.cursor()
-    with open('baseline_matrix_3.sql', 'r') as f:
+    with open(f'baseline_matrix_{id_mat_base}.sql', 'r') as f:
         sql_script = f.read()
     c.executescript(sql_script)
     c.execute(f'''
-        SELECT * FROM baseline_matrix_3 WHERE microcategory_id = {microcategory_id} AND location_id = {location_id}
+        SELECT * FROM baseline_matrix_{id_mat_base} WHERE microcategory_id = {microcategory_id} AND location_id = {location_id}
     ''')
     results = c.fetchall()
     for row in results:
         pri = row[2]
-    json_otv = {
-        'prise': pri,
-        'location_id': location_id,
-        'microcategory_id': microcategory_id,
-        'matrix_id': 'base_3',
-        'user_segment_id': user_id
-    }
-    return json_otv
-
-
-def logic_skid(microcategory_id, location_id, user_id):  # выявление, есть ли скидка
-    pri = ''
-    conn = sqlite3.connect(':memory:')
-    c = conn.cursor()
-    with open('discount_matrix_3.sql', 'r') as f:
-        sql_script = f.read()
-    c.executescript(sql_script)
-    c.execute(f'''
-        SELECT * FROM discount_matrix_3 WHERE microcategory_id = {microcategory_id} AND location_id = {location_id}
-    ''')
-    results = c.fetchall()
-    for row in results:
-        pri = str(row[2])
     if pri == '':
-        print('не нашли в 3')
-        pri = ''
-        conn = sqlite3.connect(':memory:')
-        c = conn.cursor()
-        with open('discount_matrix_2.sql', 'r') as f:
-            sql_script = f.read()
-        c.executescript(sql_script)
-        c.execute(f'''
-            SELECT * FROM discount_matrix_2 WHERE microcategory_id = {microcategory_id} AND location_id = {location_id}
-        ''')
-        results = c.fetchall()
-        for row in results:
-            pri = str(row[2])
-        if pri == '':
-            print('не нашли в 2')
-            pri = ''
-            conn = sqlite3.connect(':memory:')
-            c = conn.cursor()
-            with open('discount_matrix_1.sql', 'r') as f:
-                sql_script = f.read()
-            c.executescript(sql_script)
-            c.execute(f'''
-                SELECT * FROM discount_matrix_1 WHERE microcategory_id = {microcategory_id} AND location_id = {location_id}
-            ''')
-            results = c.fetchall()
-            for row in results:
-                pri = str(row[2])
-            if pri == '':
-                print('не нашли в 1')
-                logic_base(microcategory_id, location_id, user_id)
-            else:
-                json_otv = {
-                    'prise': pri,
-                    'location_id': location_id,
-                    'microcategory_id': microcategory_id,
-                    'matrix_id': 'dis_1',
-                    'user_segment_id': user_id
-                }
-        else:
-            json_otv = {
-                'prise': pri,
-                'location_id': location_id,
-                'microcategory_id': microcategory_id,
-                'matrix_id': 'dis_2',
-                'user_segment_id': user_id
-            }
+        logic_base(microcategory_id, location_id, user_id, id_mat_base - 1)
     else:
         json_otv = {
             'prise': pri,
             'location_id': location_id,
             'microcategory_id': microcategory_id,
-            'matrix_id': 'dis_3',
+            'matrix_id': id_mat_base,
             'user_segment_id': user_id
         }
-    return json_otv
+        return json_otv
+
+
+def logic_skid(microcategory_id, location_id, user_id, id_mat_base, id_mat_dis):  # выявление, есть ли скидка
+    if id_mat_dis == 0:
+        logic_base(microcategory_id, location_id, user_id, id_mat_base)
+    else:
+        pri = ''
+        conn = sqlite3.connect(':memory:')
+        c = conn.cursor()
+        with open('discount_matrix_{id_mat_dis}.sql', 'r') as f:
+            sql_script = f.read()
+        c.executescript(sql_script)
+        c.execute(f'''
+            SELECT * FROM discount_matrix_{id_mat_dis} WHERE microcategory_id = {microcategory_id} AND location_id = {location_id}
+        ''')
+        results = c.fetchall()
+        for row in results:
+            pri = str(row[2])
+        if pri == '':
+            logic_skid(microcategory_id, location_id, user_id, id_mat_dis - 1)
+        else:
+            json_otv = {
+                'prise': pri,
+                'location_id': location_id,
+                'microcategory_id': microcategory_id,
+                'matrix_id': id_mat_dis,
+                'user_segment_id': user_id
+            }
+            return json_otv

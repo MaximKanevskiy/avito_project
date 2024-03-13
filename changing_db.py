@@ -115,10 +115,14 @@ def set_new_price(category_id: int, location_id: int, new_price: int, matrix_typ
             with open(f"administration_panel/service_pols/baseline_matrix_{last_id}.sql", "r") as file:
                 sql_script = file.read()
             c.executescript(sql_script)
-            c.execute(f'''
-                    insert into baseline_matrix_{last_id} (microcategory_id, location_id, price)
-                    values ({category_id}, {location_id}, {new_price});
-                  ''')
+            sql_script += f'''
+                    UPDATE baseline_matrix_{last_id}
+                    SET price = {new_price}
+                    WHERE microcategory_id = {category_id}
+                    AND location_id = {location_id};
+                  '''
+            with open(f"administration_panel/service_pols/baseline_matrix_{last_id}.sql", "w") as file:
+                file.write(sql_script)
         else:
             set_last_matrix_id(baseline_matrix_line_id)
             new_last_id = get_last_matrix_id(baseline_matrix_line_id)
@@ -142,10 +146,15 @@ def set_new_price(category_id: int, location_id: int, new_price: int, matrix_typ
             with open(f"administration_panel/service_pols/discount_matrix_{last_id}.sql", "r") as file:
                 sql_script = file.read()
             c.executescript(sql_script)
-            c.execute(f'''
-                    insert into discount_matrix_{last_id} (microcategory_id, location_id, price)
-                    values ({category_id}, {location_id}, {new_price});
-                  ''')
+            c.executescript(sql_script)
+            sql_script += f'''
+                    UPDATE discount_matrix_{last_id}
+                    SET price = {new_price}
+                    WHERE microcategory_id = {category_id}
+                    AND location_id = {location_id};
+                          '''
+            with open(f"administration_panel/service_pols/baseline_matrix_{last_id}.sql", "w") as file:
+                file.write(sql_script)
         else:
             set_last_matrix_id(discount_matrix_line_id)
             new_last_id = get_last_matrix_id(discount_matrix_line_id)
