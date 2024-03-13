@@ -153,7 +153,7 @@ def set_new_price(category_id: int, location_id: int, new_price: int, matrix_typ
                     WHERE microcategory_id = {category_id}
                     AND location_id = {location_id};
                           '''
-            with open(f"administration_panel/service_pols/baseline_matrix_{last_id}.sql", "w") as file:
+            with open(f"administration_panel/service_pols/discount_matrix_{last_id}.sql", "w") as file:
                 file.write(sql_script)
         else:
             set_last_matrix_id(discount_matrix_line_id)
