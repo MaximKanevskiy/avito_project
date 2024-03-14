@@ -5,7 +5,6 @@ import sqlite3
 user_skid = [2100, 2200, 2300, 2400, 2500, 2600, 2700, 2800, 2900, 3000, 3100, 3200, 3300, 3400, 3500, 3600, 3700, 3800,
              3900, 4000, 4100, 4200]
 
-
 def main(request):
     if request.method == 'POST':
         try:
@@ -22,7 +21,7 @@ def main(request):
 
 
 def logic_main(microcategory_id, location_id,
-               user_id):  # доделать построение и ретюрн json с нужными данными (смотреть в методичке) + функцию выявления скидки
+               user_id):
     global user_skid
 
     with open('путь к файлу', 'r') as file:
@@ -61,7 +60,7 @@ def logic_base(microcategory_id, location_id, user_id, id_mat_base):
         return json_otv
 
 
-def logic_skid(microcategory_id, location_id, user_id, id_mat_base, id_mat_dis):  # выявление, есть ли скидка
+def logic_skid(microcategory_id, location_id, user_id, id_mat_base, id_mat_dis):
     if id_mat_dis == 0:
         logic_base(microcategory_id, location_id, user_id, id_mat_base)
     else:
